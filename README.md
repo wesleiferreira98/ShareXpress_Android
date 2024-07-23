@@ -49,6 +49,17 @@ ShareXpress é um aplicativo Android que permite a transferência de arquivos en
 - **Suporte a Protocolos Adicionais:** Planejamos adicionar suporte a outros protocolos de transferência de arquivos.
 - **Melhorias na Interface:** Melhorias contínuas na interface do usuário para uma experiência mais fluida.
 
+## Imagens do Aplicativo
+
+![1721775994096](image/README/1721775994096.png)
+
+![1721776013746](image/README/1721776013746.png)
+
+![1721776034078](image/README/1721776034078.png)
+
+![1721776096174](image/README/1721776096174.png)
+
+
 ## Contribuindo
 
 Se você gostaria de contribuir para o desenvolvimento do ShareXpress, sinta-se à vontade para abrir uma issue ou fazer um pull request.
