@@ -90,6 +90,11 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun checkPermissions() {
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            intent.data = Uri.parse("package:${applicationContext.packageName}")
+            startActivityForResult(intent, 0)
+        }
         val permissions = arrayOf(
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.ACCESS_MEDIA_LOCATION,
@@ -107,15 +112,8 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
         }
 
         if (permissionsToRequest.isNotEmpty()) {
-
             ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 0)
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-            intent.data = Uri.parse("package:${applicationContext.packageName}")
-            startActivityForResult(intent, 0)
-        } else if (!Environment.isExternalStorageManager()) {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-            intent.data = Uri.parse("package:${applicationContext.packageName}")
-            startActivityForResult(intent, 0)
+
         }
     }
 
@@ -132,10 +130,6 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
 
             if (deniedPermissions.isNotEmpty()) {
                 Toast.makeText(this, "Permissões negadas: ${deniedPermissions.joinToString()}", Toast.LENGTH_LONG).show()
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                intent.data = Uri.parse("package:${applicationContext.packageName}")
-                startActivityForResult(intent, 0)
             }
         }
     }
