@@ -129,7 +129,7 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
                 .map { permissions[it] }
 
             if (deniedPermissions.isNotEmpty()) {
-                Toast.makeText(this, "Permissões negadas: ${deniedPermissions.joinToString()}", Toast.LENGTH_LONG).show()
+                //Toast.makeText(this, "Permissões negadas: ${deniedPermissions.joinToString()}", Toast.LENGTH_LONG).show()
             }
         }
     }
