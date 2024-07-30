@@ -3,40 +3,41 @@ package org.ferreiratechlab.sharexpress.ui
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.os.StatFs
+import android.provider.Settings
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.navigation.NavigationView
 import org.ferreiratechlab.sharexpress.R
+import org.ferreiratechlab.sharexpress.data.model.FileViewModel
 import org.ferreiratechlab.sharexpress.data.network.SocketServer
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.util.*
-import android.util.Log
-import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.widget.Toolbar
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import java.io.IOException
-import kotlin.concurrent.thread
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.navigation.NavigationView
-import org.ferreiratechlab.sharexpress.data.model.FileViewModel
 import java.util.concurrent.Executors
+import kotlin.concurrent.thread
 
-class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
+class ReceiveActivity : AppCompatActivity(), FileTransferListener {
     private lateinit var btnStartServer: Button
     private lateinit var tvIpAddress: TextView
     private lateinit var tvPort: TextView
@@ -50,9 +51,9 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var toolbar: Toolbar
     private lateinit var navigationView: NavigationView
-    // Criar um ExecutorService com um thread pool
     private val executorService = Executors.newSingleThreadExecutor()
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_receive)
@@ -65,8 +66,6 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.navigation_view)
 
-
-
         filesAdapter = FilesAdapter(mutableListOf())
         recyclerView.adapter = filesAdapter
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -78,11 +77,7 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { drawerLayout.openDrawer(navigationView) }
 
-
-
-
         checkPermissions()
-         // Inicializa a variável aqui
 
         btnStartServer.setOnClickListener {
             if (isServerRunning) {
@@ -93,13 +88,21 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun checkPermissions() {
+        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+        intent.data = Uri.parse("package:${applicationContext.packageName}")
+        startActivityForResult(intent, 0)
         val permissions = arrayOf(
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.ACCESS_MEDIA_LOCATION,
             Manifest.permission.POST_NOTIFICATIONS,
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.INTERNET,
+            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_AUDIO
         )
 
         val permissionsToRequest = permissions.filter {
@@ -108,26 +111,10 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
 
         if (permissionsToRequest.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 0)
-        }
-    }
-
-
-    // Use esse método para atualizar o progresso do arquivo
-    override fun onFileProgress(fileName: String, progress: Int) {
-        Handler(Looper.getMainLooper()).post {
-            val fileItem = FileItem(fileName, progress)
-            filesAdapter.addFile(fileItem)
-            filesAdapter.updateProgress(fileName, progress)
-        }
-    }
-
-
-    // Use esse método para adicionar um arquivo recebido
-    override fun onFileReceived(fileName: String) {
-        runOnUiThread {
-            Log.d("UI_THREAD", "Updating UI on thread: ${Thread.currentThread().name}")
-            //filesAdapter.addFile(fileName)
-            //filesAdapter.notifyDataSetChanged()
+        } else if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            intent.data = Uri.parse("package:${applicationContext.packageName}")
+            startActivityForResult(intent, 0)
         }
     }
 
@@ -144,9 +131,32 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
 
             if (deniedPermissions.isNotEmpty()) {
                 Toast.makeText(this, "Permissões negadas: ${deniedPermissions.joinToString()}", Toast.LENGTH_LONG).show()
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:${applicationContext.packageName}")
+                startActivityForResult(intent, 0)
             }
         }
     }
+
+    // Use esse método para atualizar o progresso do arquivo
+    override fun onFileProgress(fileName: String, progress: Int) {
+        Handler(Looper.getMainLooper()).post {
+            val fileItem = FileItem(fileName, progress)
+            filesAdapter.addFile(fileItem)
+            filesAdapter.updateProgress(fileName, progress)
+        }
+    }
+
+    // Use esse método para adicionar um arquivo recebido
+    override fun onFileReceived(fileName: String) {
+        runOnUiThread {
+            Log.d("UI_THREAD", "Updating UI on thread: ${Thread.currentThread().name}")
+            //filesAdapter.addFile(fileName)
+            //filesAdapter.notifyDataSetChanged()
+        }
+    }
+
     private fun startServer(port: Int) {
         Log.d("Server", "Starting server")
         val ip = getLocalIpAddress()
@@ -155,7 +165,7 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
             try {
                 // Atualize a interface para mostrar que o servidor está iniciando
                 Log.d("Server", "Before starting SocketServer on port: $port")
-                socketServer.startServer(port, this,this)
+                socketServer.startServer(port, this, this)
                 socketServer.start()
                 Log.d("Server", "After starting SocketServer")
                 runOnUiThread {
@@ -165,27 +175,22 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
                     btnStartServer.text = "Iniciar Servidor"
                 }
 
-                    runOnUiThread {
-                        Toast.makeText(this, "Servidor iniciado em $ip:$port", Toast.LENGTH_LONG).show()
-                        isServerRunning = true
-                        tvIpAddress.text = "Endereço IP: $ip"
-                        tvPort.text = "Porta: $port"
-                        btnStartServer.text = "Encerrar Servidor"
-                        showServerNotification(ip, port)
-                    }
-
-
+                runOnUiThread {
+                    Toast.makeText(this, "Servidor iniciado em $ip:$port", Toast.LENGTH_LONG).show()
+                    isServerRunning = true
+                    tvIpAddress.text = "Endereço IP: $ip"
+                    tvPort.text = "Porta: $port"
+                    btnStartServer.text = "Encerrar Servidor"
+                    showServerNotification(ip, port)
+                }
             } catch (e: Exception) {
                 Log.e("Server", "Error starting server: ${e.message}", e)
                 runOnUiThread {
-                        isServerRunning = false
-                        tvIpAddress.text = "Endereço IP: N/A"
-                        tvPort.text = "Porta: N/A"
-                        btnStartServer.text = "Iniciar Servidor"
+                    isServerRunning = false
+                    tvIpAddress.text = "Endereço IP: N/A"
+                    tvPort.text = "Porta: N/A"
+                    btnStartServer.text = "Iniciar Servidor"
                 }
-
-
-
             }
         }
 
@@ -202,17 +207,12 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
         }
     }
 
-
-
-
-
-
     private fun stopServer() {
         try {
             serverThread?.interrupt()
             socketServer.stopServer()
             finish()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.e("Server", "Error stopping server: ${e.message}", e)
         }
 
@@ -271,4 +271,3 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener  {
         notificationManager.cancel(1)
     }
 }
-

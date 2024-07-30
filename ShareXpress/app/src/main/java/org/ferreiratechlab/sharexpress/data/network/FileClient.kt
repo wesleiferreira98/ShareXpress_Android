@@ -8,6 +8,7 @@ import org.ferreiratechlab.sharexpress.ui.FileAdapter
 import org.json.JSONObject
 import java.io.InputStream
 import java.io.OutputStream
+import java.math.BigDecimal
 import java.net.Socket
 
 class FileClient(
@@ -21,7 +22,7 @@ class FileClient(
 
     override fun run() {
         try {
-            val fileSize = inputStream.available().toLong()
+            val fileSize = BigDecimal(inputStream.available().toLong())
 
             Socket(ip, port).use { socket ->
                 val outputStream: OutputStream = socket.getOutputStream()
@@ -41,17 +42,23 @@ class FileClient(
                     outputStream.flush()
                 }
 
+                // Confirmar recebimento do cabeçalho
+                val confirmation = socket.getInputStream().bufferedReader().readLine()
+                if (confirmation != "OK") {
+                    throw Exception("Falha na confirmação do cabeçalho do servidor")
+                }
+
                 // Enviar arquivo
                 inputStream.use { fileInputStream ->
                     val buffer = ByteArray(1024)
                     var bytesRead: Int
-                    var bytesSent = 0L
+                    var bytesSent = BigDecimal.ZERO
 
                     while (fileInputStream.read(buffer).also { bytesRead = it } != -1) {
                         outputStream.write(buffer, 0, bytesRead)
-                        bytesSent += bytesRead
+                        bytesSent += BigDecimal(bytesRead)
                         Log.d("FileClient", "Enviando Arquivo: $fileName $bytesSent de $fileSize")
-                        val progress = (bytesSent * 100 / fileSize).toInt()
+                        val progress = (bytesSent.multiply(BigDecimal(100)).divide(fileSize, 2, BigDecimal.ROUND_HALF_UP)).toInt()
                         Log.d("FileClient", "Progresso do envio: $progress%")
 
                         // Atualizar a barra de progresso
@@ -65,7 +72,9 @@ class FileClient(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            //Toast.makeText(context, "Falha na conexão ou arquivo não encontrado", Toast.LENGTH_LONG).show()
+            (context as? Activity)?.runOnUiThread {
+                Toast.makeText(context, "Falha na conexão ou arquivo não encontrado", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
