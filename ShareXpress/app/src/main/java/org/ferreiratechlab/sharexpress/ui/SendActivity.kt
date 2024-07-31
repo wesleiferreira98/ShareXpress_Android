@@ -1,10 +1,12 @@
 package org.ferreiratechlab.sharexpress.ui
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -19,6 +21,7 @@ import com.google.android.material.navigation.NavigationView
 import org.ferreiratechlab.sharexpress.R
 import org.ferreiratechlab.sharexpress.data.network.FileClient
 import java.io.InputStream
+import java.math.BigDecimal
 import java.net.Socket
 import java.util.regex.Pattern
 
@@ -188,14 +191,16 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
 
         for (uri in files) {
             val fileName = getFileNameFromUri(uri) ?: "unknown"
+            val fileSize = getFileSize(uri)
             val inputStream = getInputStreamFromUri(uri)
+
 
             if (inputStream == null) {
                 showAlertDialog("Erro", "Não foi possível acessar o arquivo: $fileName")
                 continue
             }
 
-            val clientThread = FileClient(ip, port, inputStream, this, fileName, fileAdapter)
+            val clientThread = FileClient(ip, port, inputStream, this, fileName,fileSize,fileAdapter)
             clientThread.start()
         }
     }
@@ -206,6 +211,20 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
             .setMessage(message)
             .setPositiveButton("OK", null)
             .show()
+    }
+
+    private fun getFileSize(uri: Uri): BigDecimal {
+        var size: BigDecimal = BigDecimal.ZERO
+        val cursor = this.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex != -1) {
+                    size = BigDecimal(it.getLong(sizeIndex))
+                }
+            }
+        }
+        return size
     }
 
     private fun isValidIP(ip: String): Boolean {

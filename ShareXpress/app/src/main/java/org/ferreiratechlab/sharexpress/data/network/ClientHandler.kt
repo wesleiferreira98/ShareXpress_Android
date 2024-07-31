@@ -26,7 +26,7 @@ class ClientHandler(
 
                 val file = File(saveDirectory, fileName)
                 FileOutputStream(file).use { fileOutputStream ->
-                    val buffer = ByteArray(4096)
+                    val buffer = ByteArray(10 * 1024 * 1024 )
                     var bytesRead: Int
                     var totalBytesRead = 0L
                     val inputStream = clientSocket.getInputStream()

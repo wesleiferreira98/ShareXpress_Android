@@ -3,6 +3,7 @@ package org.ferreiratechlab.sharexpress.data.network
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import org.ferreiratechlab.sharexpress.ui.FileAdapter
@@ -19,13 +20,14 @@ class FileClient(
     private val inputStream: InputStream,
     private val context: Context,
     private val fileName: String,
+    private val fileSize: BigDecimal,
     private val adapter: FileAdapter
 ) : Thread() {
 
     @SuppressLint("DefaultLocale")
     override fun run() {
         try {
-            val fileSize = BigDecimal(inputStream.available().toLong())
+            val chunkSize = 10 * 1024 * 1024   // 10MB
 
             Socket(ip, port).use { socket ->
                 val outputStream: OutputStream = socket.getOutputStream()
@@ -55,10 +57,11 @@ class FileClient(
                 }
 
                 Log.d("FileClient", "Confirmação recebida: $fileName")
+                Log.d("FileClient", "Confirmação recebida tamanho do arquivo: $fileSize")
 
                 // Enviar arquivo
                 inputStream.use { fileInputStream ->
-                    val buffer = ByteArray(1024)
+                    val buffer = ByteArray(chunkSize)
                     var bytesRead: Int
                     var bytesSent = BigDecimal.ZERO
                     val startTime = System.currentTimeMillis()
@@ -94,4 +97,5 @@ class FileClient(
             }
         }
     }
+
 }
