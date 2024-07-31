@@ -69,7 +69,3 @@ Se você gostaria de contribuir para o desenvolvimento do ShareXpress, sinta-se 
 ## Licença
 
 Este projeto está licenciado sob a [Licença MIT](LICENSE).
-
----
-
-Sinta-se à vontade para ajustar qualquer seção conforme necessário para atender às especificidades do seu projeto!
