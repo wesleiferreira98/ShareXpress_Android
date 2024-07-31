@@ -202,6 +202,12 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
         }
     }
 
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopServer()
+    }
+
     private fun stopServer() {
         try {
             serverThread?.interrupt()
