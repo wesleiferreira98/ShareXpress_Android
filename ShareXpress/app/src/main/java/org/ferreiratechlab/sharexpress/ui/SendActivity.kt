@@ -1,6 +1,7 @@
 package org.ferreiratechlab.sharexpress.ui
 
 import android.app.Activity
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -18,8 +19,12 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.ferreiratechlab.sharexpress.R
 import org.ferreiratechlab.sharexpress.data.network.FileClient
+import org.ferreiratechlab.sharexpress.data.network.FileClientText
 import java.io.InputStream
 import java.math.BigDecimal
 import java.net.Socket
@@ -32,6 +37,7 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
     private lateinit var etIpAddress: EditText
     private lateinit var etPort: EditText
     private lateinit var btnTestConnection: Button
+    private lateinit var btnSendClipboard: Button
     private lateinit var rvFiles: RecyclerView
     private lateinit var btnSelectFiles: Button
     private lateinit var btnSendFiles: Button
@@ -52,6 +58,7 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
         rvFiles = findViewById(R.id.rvFiles)
         btnSelectFiles = findViewById(R.id.btnSelectFiles)
         btnSendFiles = findViewById(R.id.btnSendFiles)
+        btnSendClipboard = findViewById(R.id.btnSendClipboard)
 
         setupRecyclerView()
 
@@ -60,6 +67,11 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
         btnTestConnection.setOnClickListener {
             testConnection()
             hideKeyboard() }
+
+        btnSendClipboard.setOnClickListener {
+            sendClipboardContent()
+            hideKeyboard()
+        }
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -205,6 +217,42 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
         }
     }
 
+    private fun sendClipboardContent() {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipData = clipboard.primaryClip
+
+        if (clipData != null && clipData.itemCount > 0) {
+            val clipboardText = clipData.getItemAt(0).text.toString()
+
+            if (clipboardText.isNotEmpty()) {
+                val ip = etIpAddress.text.toString()
+                val port = etPort.text.toString().toIntOrNull()
+
+                if (ip.isEmpty() || port == null || !isValidIP(ip)) {
+                    showAlertDialog("Erro", "Por favor, insira um IP válido e uma porta válida.")
+                    return
+                }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        FileClientText(ip, port,this@SendActivity).sendText(clipboardText)
+                        runOnUiThread {
+                            showAlertDialog("Sucesso", "Conteúdo da área de transferência enviado com sucesso.")
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            showAlertDialog("Erro", "Erro ao enviar conteúdo da área de transferência: ${e.message}")
+                        }
+                    }
+                }
+            } else {
+                showAlertDialog("Erro", "A área de transferência está vazia.")
+            }
+        } else {
+            showAlertDialog("Erro", "A área de transferência está vazia.")
+        }
+    }
+
     private fun showAlertDialog(title: String, message: String) {
         AlertDialog.Builder(this)
             .setTitle(title)
@@ -226,6 +274,7 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
         }
         return size
     }
+
 
     private fun isValidIP(ip: String): Boolean {
         val pattern = Pattern.compile(

@@ -10,6 +10,7 @@ import org.ferreiratechlab.sharexpress.ui.FileAdapter
 import org.json.JSONObject
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.PrintWriter
 import java.math.BigDecimal
 import java.net.Socket
 import java.util.concurrent.TimeUnit
@@ -94,6 +95,16 @@ class FileClient(
             e.printStackTrace()
             (context as? Activity)?.runOnUiThread {
                 Toast.makeText(context, "Falha na conexão ou arquivo não encontrado", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    fun sendText(text: String) {
+        Socket(ip, port).use { socket ->
+            val outputStream = socket.getOutputStream()
+            PrintWriter(outputStream, true).use { writer ->
+                writer.println("TEXT")
+                writer.println(text)
             }
         }
     }

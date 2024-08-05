@@ -3,6 +3,8 @@ package org.ferreiratechlab.sharexpress.ui
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -151,6 +153,28 @@ class ReceiveActivity : AppCompatActivity(), FileTransferListener {
             //filesAdapter.notifyDataSetChanged()
         }
     }
+
+    override fun onClipboardContentReceived(content: String) {
+        Log.d("Clipboard", "Received clipboard content: $content")
+
+        // Obtém o ClipboardManager
+        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Clipboard Content", content)
+
+        // Define o conteúdo da área de transferência
+        clipboardManager.setPrimaryClip(clip)
+        Log.d("Clipboard", "Primary clip set: ${clipboardManager.primaryClip?.getItemAt(0)?.text}")
+
+        // Verifica se o conteúdo foi atualizado corretamente
+        if (clipboardManager.hasPrimaryClip() && clipboardManager.primaryClip!!.getItemAt(0).text == content) {
+            Toast.makeText(this, "Texto da área de transferência atualizado!", Toast.LENGTH_SHORT).show()
+            Log.d("Clipboard", "Clipboard content updated successfully")
+        } else {
+            Toast.makeText(this, "Falha ao atualizar a área de transferência.", Toast.LENGTH_SHORT).show()
+            Log.d("Clipboard", "Failed to update clipboard content")
+        }
+    }
+
 
     private fun startServer(port: Int) {
         Log.d("Server", "Starting server")
