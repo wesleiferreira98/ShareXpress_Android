@@ -105,6 +105,7 @@ class SocketServer : Thread() {
         isRunning = false
         try {
             serverSocket.close()
+            serverResponder.stopListening()
         } catch (e: Exception) {
             Log.e("Server", "Erro ao fechar o servidor: ${e.message}", e)
         }
