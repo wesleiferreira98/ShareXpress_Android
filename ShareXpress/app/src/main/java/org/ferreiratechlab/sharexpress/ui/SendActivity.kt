@@ -41,6 +41,7 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
     private lateinit var rvFiles: RecyclerView
     private lateinit var btnSelectFiles: Button
     private lateinit var btnSendFiles: Button
+    private lateinit var btnSearchServers: Button
     private var isSendingFiles = false
 
     private val files = mutableListOf<Uri>()
@@ -57,6 +58,7 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
         btnTestConnection = navigationView.findViewById(R.id.btnTestConnection)
         rvFiles = findViewById(R.id.rvFiles)
         btnSelectFiles = findViewById(R.id.btnSelectFiles)
+        btnSearchServers = findViewById(R.id.btnSearchServers)
         btnSendFiles = findViewById(R.id.btnSendFiles)
         btnSendClipboard = findViewById(R.id.btnSendClipboard)
 
@@ -73,10 +75,16 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
             hideKeyboard()
         }
 
+        btnSearchServers.setOnClickListener {
+            searchForServers()
+        }
+
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener { drawerLayout.openDrawer(navigationView) }
+
+        searchForServers()
     }
 
     private fun setupRecyclerView() {
@@ -126,6 +134,14 @@ class SendActivity : AppCompatActivity() , OnItemLongClickListener{
             .show()
     }
 
+    private fun searchForServers() {
+        val dialogFragment = ServerDiscoveryDialog { ip, port ->
+            Log.d("ServerDiscovery", "Servidor selecionado: $ip:$port")
+            etIpAddress.setText(ip)
+            etPort.setText(port.toString())
+        }
+        dialogFragment.show(supportFragmentManager, "ServerDiscoveryDialog")
+    }
 
 
 

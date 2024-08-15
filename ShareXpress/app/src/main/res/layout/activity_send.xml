@@ -115,6 +115,13 @@
                 android:layout_height="wrap_content"
                 android:text="Enviar Área de Transferência"
                 android:layout_marginTop="16dp"/>
+
+            <Button
+                android:id="@+id/btnSearchServers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Procurar dispositivos na rede"
+                android:layout_marginTop="16dp"/>
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 

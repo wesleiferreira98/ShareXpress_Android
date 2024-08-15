@@ -22,12 +22,17 @@ class SocketServer : Thread() {
 
     private var onFileProgressCallback: ((String, Int) -> Unit)? = null
 
+    private val serverResponder = ServerResponder(12345)
+
+
     fun startServer(port: Int, context: Context, listener: FileTransferListener) {
         this.context = context
         this.fileTransferListener = listener
         serverSocket = ServerSocket(port)
         isRunning = true
         onServerStartedCallback?.invoke()
+        // Iniciar a escuta do broadcast para descoberta do servidor
+        serverResponder.startListening()
     }
 
     override fun run() {
